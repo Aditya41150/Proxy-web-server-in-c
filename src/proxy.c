@@ -1,3 +1,13 @@
+#include <netdb.h>
+#include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <strings.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+
 #include "proxy.h"
 
 /* Parse HTTP request from raw data */
@@ -35,7 +45,10 @@ HttpRequest* parse_request(const char *raw_request) {
     
     req->port = 80; /* Default HTTP port */
     
-    while ((line = strtok(NULL, "\r\n")) != NULL && strlen(line) > 0) {
+    while (
+        (line = strtok(NULL, "\r\n")) != NULL && 
+        strlen(line) > 0
+    ) {
         if (strncasecmp(line, "Host:", 5) == 0) {
             char *host_start = line + 5;
             while (*host_start == ' ') host_start++;
@@ -43,11 +56,19 @@ HttpRequest* parse_request(const char *raw_request) {
             char *colon = strchr(host_start, ':');
             if (colon) {
                 int len = colon - host_start;
-                strncpy(req->host, host_start, len < MAX_HOST_LEN ? len : MAX_HOST_LEN - 1);
+                strncpy(
+                    req->host, 
+                    host_start, 
+                    len < MAX_HOST_LEN ? len : MAX_HOST_LEN - 1
+                );
                 req->host[len] = '\0';
                 sscanf(colon + 1, "%d", &req->port);
             } else {
-                strncpy(req->host, host_start, MAX_HOST_LEN - 1);
+                strncpy(
+                    req->host, 
+                    host_start, 
+                    MAX_HOST_LEN - 1
+                );
                 req->host[MAX_HOST_LEN - 1] = '\0';
             }
         }
@@ -118,7 +139,13 @@ int connect_to_server(const char *host, int port) {
     server_addr.sin_port = htons(port);
     memcpy(&server_addr.sin_addr, he->h_addr_list[0], he->h_length);
     
-    if (connect(sock, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+    if (
+        connect(
+            sock, 
+            (struct sockaddr *) &server_addr, 
+            sizeof(server_addr)
+        ) < 0
+    ) {
         perror("connect");
         close(sock);
         return -1;
@@ -133,7 +160,13 @@ int send_request_to_server(int server_sock, HttpRequest *req) {
     int n;
     
     /* Build HTTP request line */
-    snprintf(buffer, sizeof(buffer), "%s %s HTTP/1.1\r\n", req->method, req->path);
+    snprintf(
+        buffer, 
+        sizeof(buffer), 
+        "%s %s HTTP/1.1\r\n", 
+        req->method, 
+        req->path
+    );
     n = send(server_sock, buffer, strlen(buffer), 0);
     if (n < 0) {
         perror("send request line");
@@ -141,8 +174,19 @@ int send_request_to_server(int server_sock, HttpRequest *req) {
     }
     
     /* Send Host header if not present */
-    snprintf(buffer, sizeof(buffer), "Host: %s:%d\r\n", req->host, req->port);
-    n = send(server_sock, buffer, strlen(buffer), 0);
+    snprintf(
+        buffer, 
+        sizeof(buffer), 
+        "Host: %s:%d\r\n", 
+        req->host, 
+        req->port
+    );
+    n = send(
+        server_sock, 
+        buffer, 
+        strlen(buffer), 
+        0
+    );
     if (n < 0) {
         perror("send host header");
         return -1;
@@ -150,7 +194,12 @@ int send_request_to_server(int server_sock, HttpRequest *req) {
     
     /* Send Connection: close header */
     const char *connection = "Connection: close\r\n";
-    n = send(server_sock, connection, strlen(connection), 0);
+    n = send(
+        server_sock, 
+        connection, 
+        strlen(connection), 
+        0
+    );
     if (n < 0) {
         perror("send connection header");
         return -1;
@@ -158,7 +207,12 @@ int send_request_to_server(int server_sock, HttpRequest *req) {
     
     /* Send other headers */
     if (req->headers_len > 0) {
-        n = send(server_sock, req->headers, req->headers_len, 0);
+        n = send(
+            server_sock, 
+            req->headers, 
+            req->headers_len, 
+            0
+        );
         if (n < 0) {
             perror("send headers");
             return -1;
@@ -167,7 +221,12 @@ int send_request_to_server(int server_sock, HttpRequest *req) {
     
     /* Send blank line */
     const char *blank = "\r\n";
-    n = send(server_sock, blank, strlen(blank), 0);
+    n = send(
+        server_sock, 
+        blank, 
+        strlen(blank), 
+        0
+    );
     if (n < 0) {
         perror("send blank line");
         return -1;
@@ -175,7 +234,12 @@ int send_request_to_server(int server_sock, HttpRequest *req) {
     
     /* Send body if present */
     if (req->body_len > 0) {
-        n = send(server_sock, req->body, req->body_len, 0);
+        n = send(
+            server_sock, 
+            req->body, 
+            req->body_len, 
+            0
+        );
         if (n < 0) {
             perror("send body");
             return -1;

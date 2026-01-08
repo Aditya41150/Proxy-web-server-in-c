@@ -3,6 +3,7 @@
 ## 📋 Project Overview
 
 A complete, production-ready HTTP proxy server written in C with support for:
+
 - **Multithreading**: Handle multiple concurrent client connections
 - **Response Caching**: Optional in-memory caching of HTTP responses
 - **Request Forwarding**: Forward HTTP requests to remote servers
@@ -40,28 +41,28 @@ A complete, production-ready HTTP proxy server written in C with support for:
 
 ### Build and Configuration
 
-5. **Makefile**
+1. **Makefile**
    - Build targets: all, run, run-no-cache, debug, clean
    - Compiler flags with warnings enabled
    - POSIX threading support
 
 ### Documentation
 
-6. **README.md**
+1. **README.md**
    - Comprehensive project documentation
    - Features, architecture, and design
    - Building and usage instructions
    - Configuration and performance tuning
    - Known limitations and future enhancements
 
-7. **QUICKSTART.md**
+2. **QUICKSTART.md**
    - Quick start guide
    - Common use cases
    - Examples with curl and wget
    - Troubleshooting guide
    - Performance tips
 
-8. **EXAMPLES.sh**
+3. **EXAMPLES.sh**
    - Executable examples of various usage patterns
    - Browser configuration instructions
    - Performance testing examples
@@ -69,7 +70,7 @@ A complete, production-ready HTTP proxy server written in C with support for:
 
 ### Testing
 
-9. **test.sh**
+1. **test.sh**
    - Automated test script
    - Tests basic functionality, caching, and error handling
    - Works with curl for HTTP requests
@@ -78,31 +79,31 @@ A complete, production-ready HTTP proxy server written in C with support for:
 
 ### Architecture
 
-```
-┌─────────────────────────────────────┐
-│         Main Thread                 │
-│  - Listen on configured port        │
-│  - Accept client connections        │
-│  - Create worker threads            │
-└────────────┬────────────────────────┘
+```plaintext
+┌───────────────────────────────┐
+│         Main Thread           │
+│  - Listen on configured port  │
+│  - Accept client connections  │
+│  - Create worker threads      │
+└────────────┬──────────────────┘
              │
     ┌────────┼────────┐
     ↓        ↓        ↓
  Worker   Worker   Worker
  Thread   Thread   Thread
-   │        │        │
-   ├─ Parse request
-   ├─ Check cache
-   ├─ Connect to origin
-   ├─ Forward request
-   ├─ Receive response
-   ├─ Cache response
-   └─ Send to client
+    │        │        │
+    ├─ Parse request
+    ├─ Check cache
+    ├─ Connect to origin
+    ├─ Forward request
+    ├─ Receive response
+    ├─ Cache response
+    └─ Send to client
 ```
 
 ### Data Flow
 
-```
+```plaintext
 Client HTTP Request
         ↓
     Proxy Server
@@ -182,6 +183,7 @@ curl -x http://localhost:8080 http://example.com
 
 ## ✨ Features Implemented
 
+```plaintext
 ✅ HTTP/1.1 request parsing
 ✅ Multi-threaded request handling
 ✅ Response caching with LRU eviction
@@ -192,6 +194,7 @@ curl -x http://localhost:8080 http://example.com
 ✅ Command-line configuration
 ✅ Comprehensive error messages
 ✅ Socket resource cleanup
+```
 
 ## 🔒 Security Features
 
