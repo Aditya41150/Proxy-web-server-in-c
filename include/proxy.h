@@ -1,20 +1,8 @@
-#ifndef PROXY_H
-#define PROXY_H
+#pragma once
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <strings.h>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <sys/time.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <arpa/inet.h>
-#include <pthread.h>
-#include <signal.h>
 #include <time.h>
+#include <stddef.h>
+#include <bits/pthreadtypes.h>
 
 /* Configuration constants */
 #define MAX_CLIENTS 1024
@@ -74,5 +62,3 @@ void cache_add(Cache *cache, const char *url, const char *response, size_t size)
 int cache_get(Cache *cache, const char *url, char **response, size_t *size);
 void cache_cleanup(Cache *cache);
 void print_usage(const char *program_name);
-
-#endif // PROXY_H

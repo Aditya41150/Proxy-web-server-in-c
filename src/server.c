@@ -1,3 +1,11 @@
+#include <netinet/in.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+#include <pthread.h>
+#include <sys/socket.h>
+
 #include "proxy.h"
 
 /* Handle individual client connection */
@@ -40,12 +48,19 @@ void handle_client(void *arg) {
         return;
     }
     
-    printf("[*] Parsed request: %s %s from host %s:%d\n", 
-           req->method, req->path, req->host, req->port);
+    printf(
+        "[*] Parsed request: %s %s from host %s:%d\n", 
+        req->method, req->path, req->host, req->port
+    );
     
     /* Check cache first */
     char cache_key[512];
-    snprintf(cache_key, sizeof(cache_key), "%s:%d%s", req->host, req->port, req->path);
+    snprintf(
+        cache_key, 
+        sizeof(cache_key), 
+        "%s:%d%s", 
+        req->host, req->port, req->path
+    );
     
     char *cached_response = NULL;
     size_t cached_size = 0;
