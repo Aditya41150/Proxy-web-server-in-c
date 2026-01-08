@@ -203,29 +203,36 @@ void cache_init(Cache *cache) {
   pthread_mutex_init(&cache->lock, NULL);
 }
 
-/* Add entry to cache */
+/* Add entry to cache using LRU (Least Recently Used) replacement */
 void cache_add(Cache *cache, const char *url, const char *response,
                size_t size) {
-  if (size > MAX_CACHE_ENTRY_SIZE)
+  if (size > MAX_CACHE_ENTRY_SIZE || !response)
     return;
 
   pthread_mutex_lock(&cache->lock);
 
-  if (cache->count >= CACHE_SIZE) {
+  int target_idx = -1;
+  if (cache->count < CACHE_SIZE) {
+    target_idx = cache->count;
+    cache->count++;
+  } else {
+    /* Cache is full, find the oldest entry to replace */
     time_t oldest = cache->entries[0].timestamp;
-    int oldest_idx = 0;
+    target_idx = 0;
     for (int i = 1; i < CACHE_SIZE; i++) {
       if (cache->entries[i].timestamp < oldest) {
         oldest = cache->entries[i].timestamp;
-        oldest_idx = i;
+        target_idx = i;
       }
     }
-    if (cache->entries[oldest_idx].response)
-      free(cache->entries[oldest_idx].response);
-    cache->count--;
+    /* Free the old response before replacing */
+    if (cache->entries[target_idx].response) {
+      free(cache->entries[target_idx].response);
+      cache->entries[target_idx].response = NULL;
+    }
   }
 
-  CacheEntry *entry = &cache->entries[cache->count];
+  CacheEntry *entry = &cache->entries[target_idx];
   strncpy(entry->url, url, sizeof(entry->url) - 1);
   entry->url[sizeof(entry->url) - 1] = '\0';
 
@@ -235,7 +242,9 @@ void cache_add(Cache *cache, const char *url, const char *response,
     entry->response_size = size;
     entry->timestamp = time(NULL);
     entry->hits = 0;
-    cache->count++;
+  } else if (target_idx == cache->count - 1) {
+    /* If malloc failed for a new entry, don't count it */
+    cache->count--;
   }
 
   pthread_mutex_unlock(&cache->lock);
@@ -247,13 +256,15 @@ int cache_get(Cache *cache, const char *url, char **response, size_t *size) {
   pthread_mutex_lock(&cache->lock);
   for (int i = 0; i < cache->count; i++) {
     if (strcmp(cache->entries[i].url, url) == 0) {
-      *size = cache->entries[i].response_size;
-      *response = malloc(*size);
-      if (*response) {
-        memcpy(*response, cache->entries[i].response, *size);
-        cache->entries[i].hits++;
-        pthread_mutex_unlock(&cache->lock);
-        return 1;
+      if (cache->entries[i].response) {
+        *size = cache->entries[i].response_size;
+        *response = malloc(*size);
+        if (*response) {
+          memcpy(*response, cache->entries[i].response, *size);
+          cache->entries[i].hits++;
+          pthread_mutex_unlock(&cache->lock);
+          return 1;
+        }
       }
       break;
     }
